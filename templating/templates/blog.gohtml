@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>blog</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+    </head>
+    <body>
+        {{template "top" .}}
+        <h1>{{.Title}}</h1>
+
+        <p>{{.Description}}</p>
+
+        Tags:
+        <ul>
+            {{
+                range.Tags
+            }}
+            <li>{{.}}</li>
+            {{
+                end
+            }}
+        </ul>
+        {{.HTMLBody}}
+        {{template "bottom" .}}
+    </body>
+</html>
