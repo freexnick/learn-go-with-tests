@@ -1,38 +1,85 @@
 package array_slices
 
-func Sum(numbers []int) int {
-	var sum int
-
-	for _, number := range numbers {
-		sum += number
-	}
-
-	return sum
+type Transaction struct {
+	From string
+	To   string
+	Sum  float64
 }
 
-func SumAll(numbersToSum ...[]int) []int {
-	var sums []int
+type Account struct {
+	Name    string
+	Balance float64
+}
 
-	for _, numbers := range numbersToSum {
-		sums = append(sums, Sum(numbers))
+func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
+	var result = initialValue
+	for _, x := range collection {
+		result = accumulator(result, x)
 	}
+	return result
+}
 
-	return sums
+func Sum(numbers []int) int {
+	add := func(acc, x int) int { return acc + x }
+	return Reduce(numbers, add, 0)
 }
 
 func SumAllTails(numbersToSum ...[]int) []int {
-	var sums []int
-
-	for _, numbers := range numbersToSum {
-		if len(numbers) == 0 {
-			sums = append(sums, 0)
-
+	sumTail := func(acc, x []int) []int {
+		if len(x) == 0 {
+			return append(acc, 0)
 		} else {
-			tail := numbers[1:]
-			sums = append(sums, Sum(tail))
+			tail := make([]int, len(x))
+			for i := 1; i < len(x); i++ {
+				tail[i] = x[i]
+			}
+			return append(acc, Sum(tail))
 		}
-
 	}
 
-	return sums
+	return Reduce(numbersToSum, sumTail, []int{})
+}
+
+func BalanceFor(transactions []Transaction, name string) float64 {
+	adjustBalance := func(currentBalance float64, t Transaction) float64 {
+		if t.From == name {
+			return currentBalance - t.Sum
+		}
+		if t.To == name {
+			return currentBalance + t.Sum
+		}
+
+		return currentBalance
+	}
+	return Reduce(transactions, adjustBalance, 0.0)
+}
+
+func NewTransaction(from, to Account, sum float64) Transaction {
+	return Transaction{From: from.Name, To: to.Name, Sum: sum}
+}
+
+func applyTransaction(a Account, transaction Transaction) Account {
+	if transaction.From == a.Name {
+		a.Balance -= transaction.Sum
+	}
+	if transaction.To == a.Name {
+		a.Balance += transaction.Sum
+	}
+	return a
+}
+func NewBalanceFor(account Account, transactions []Transaction) Account {
+	return Reduce(
+		transactions,
+		applyTransaction,
+		account,
+	)
+}
+
+func Find[A any](items []A, predicate func(A) bool) (value A, found bool) {
+	for _, v := range items {
+		if predicate(v) {
+			return v, true
+		}
+	}
+	return
 }
